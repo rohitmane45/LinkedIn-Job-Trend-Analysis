@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+.virtualenv/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data files (exclude raw and processed data from git)
+data/raw/*.csv
+data/raw/*.json
+data/raw/*.xlsx
+data/processed/*.csv
+data/processed/*.json
+data/processed/*.xlsx
+
+# Keep directory structure but ignore contents
+data/raw/.gitkeep
+data/processed/.gitkeep
+
+# Generated visualizations (these can be regenerated)
+visualizations/*.png
+visualizations/*.jpg
+visualizations/*.html
+visualizations/*.xlsx
+visualizations/*.pdf
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# IDE - VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# IDE - PyCharm
+.idea/
+*.iml
+*.iws
+
+# IDE - Spyder
+.spyderproject
+.spyproject
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment variables
+.env
+.env.local
+
+# Scraped data backups
+*.backup
+*.bak
+
+# Temporary files
+*.tmp
+*.temp
+~*
