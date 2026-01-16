@@ -8,6 +8,13 @@ Usage:
     python cleanup_project.py            # Actually delete files
 """
 
+import sys
+
+# Fix Windows console encoding
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+
 import os
 import argparse
 from pathlib import Path
@@ -282,36 +289,63 @@ class ProjectCleaner:
         """Create a summary of the cleaned project structure."""
         summary_file = self.project_root / 'PROJECT_STRUCTURE.md'
         
-        with open(summary_file, 'w') as f:
+        with open(summary_file, 'w', encoding='utf-8') as f:
             f.write("# LinkedIn Job Analysis - Project Structure\n\n")
-            f.write(f"Last cleaned: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            f.write(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             
             f.write("## Directory Structure\n\n")
             f.write("```\n")
             f.write("Linkedin-Job-Analysis/\n")
+            f.write("├── config/\n")
+            f.write("│   ├── settings.yaml         # Configuration settings\n")
+            f.write("│   └── alerts/               # Job alert configurations\n")
             f.write("├── data/\n")
-            f.write("│   ├── raw/              # Raw scraped data (keep 5 recent files)\n")
-            f.write("│   └── processed/        # Cleaned data\n")
+            f.write("│   ├── raw/                  # Raw scraped data\n")
+            f.write("│   ├── processed/            # Cleaned data\n")
+            f.write("│   ├── exports/              # Exported data\n")
+            f.write("│   └── jobs.db               # SQLite database\n")
             f.write("├── scripts/\n")
-            f.write("│   ├── scraper_v2.py     # Main scraper\n")
-            f.write("│   ├── scraper_india.py  # Indian cities scraper\n")
-            f.write("│   ├── visualize_data.py # Visualization module\n")
-            f.write("│   └── cleanup_project.py # This cleanup script\n")
+            f.write("│   ├── scraper_v2.py         # Main scraper\n")
+            f.write("│   ├── scraper_india.py      # Indian cities scraper\n")
+            f.write("│   ├── visualize_data.py     # Visualization module\n")
+            f.write("│   ├── analyze_jobs.py       # Data analysis module\n")
+            f.write("│   ├── generate_report.py    # Report generator\n")
+            f.write("│   ├── run_pipeline.py       # Master pipeline runner\n")
+            f.write("│   ├── scheduler.py          # Automated scheduler\n")
+            f.write("│   ├── dashboard.py          # Web dashboard\n")
+            f.write("│   ├── job_alerts.py         # Job alerts system\n")
+            f.write("│   ├── database.py           # SQLite database handler\n")
+            f.write("│   ├── trend_tracker.py      # Trend analysis\n")
+            f.write("│   ├── api_server.py         # REST API server\n")
+            f.write("│   └── cleanup_project.py    # Cleanup script\n")
             f.write("├── outputs/\n")
-            f.write("│   └── visualizations/   # Charts and graphs (keep 3 recent per type)\n")
-            f.write("├── notebooks/            # Jupyter notebooks\n")
-            f.write("└── docs/                 # Documentation\n")
+            f.write("│   ├── visualizations/       # Charts and graphs\n")
+            f.write("│   └── reports/              # Generated reports\n")
+            f.write("├── logs/                     # Application logs\n")
+            f.write("├── requirements.txt          # Python dependencies\n")
+            f.write("├── Dockerfile                # Docker image\n")
+            f.write("└── docker-compose.yml        # Docker compose config\n")
             f.write("```\n\n")
             
-            f.write("## Cleanup Rules\n\n")
-            f.write("- **Log files**: Deleted on cleanup\n")
-            f.write("- **__pycache__**: Deleted on cleanup\n")
-            f.write("- **Data files**: Keep 5 most recent\n")
-            f.write("- **Visualizations**: Keep 3 most recent per type\n")
-            f.write("- **Backups**: Keep files from last 7 days\n")
-            f.write("- **Temp files**: Deleted on cleanup\n")
+            f.write("## Quick Commands\n\n")
+            f.write("```bash\n")
+            f.write("# Run full pipeline\n")
+            f.write("python scripts/run_pipeline.py\n\n")
+            f.write("# Start dashboard (http://localhost:5000)\n")
+            f.write("python scripts/dashboard.py\n\n")
+            f.write("# Start API server (http://localhost:8000)\n")
+            f.write("python scripts/api_server.py\n\n")
+            f.write("# Job alerts\n")
+            f.write("python scripts/job_alerts.py --check\n\n")
+            f.write("# Trend tracking\n")
+            f.write("python scripts/trend_tracker.py --report\n\n")
+            f.write("# Database operations\n")
+            f.write("python scripts/database.py --stats\n\n")
+            f.write("# Docker deployment\n")
+            f.write("docker-compose up -d\n")
+            f.write("```\n")
         
-        print(f"📄 Created project structure summary: PROJECT_STRUCTURE.md")
+        print(f"[OK] Created project structure summary: PROJECT_STRUCTURE.md")
 
 
 def main():

@@ -1,0 +1,44 @@
+# LinkedIn Job Analysis - Docker Compose
+# ======================================
+
+version: '3.8'
+
+services:
+  # Main dashboard service
+  dashboard:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      - ./config:/app/config
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python scripts/dashboard.py
+    restart: unless-stopped
+
+  # API server service
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+    command: python scripts/api_server.py --host 0.0.0.0
+    restart: unless-stopped
+
+  # Scheduler service (runs pipeline automatically)
+  scheduler:
+    build: .
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      - ./config:/app/config
+      - ./logs:/app/logs
+    command: python scripts/scheduler.py --start
+    restart: unless-stopped
+    depends_on:
+      - dashboard

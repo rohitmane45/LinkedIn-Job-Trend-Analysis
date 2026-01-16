@@ -8,6 +8,13 @@ Usage:
     python visualize_data.py --file ../data/raw/jobs_india_20260114_204358.csv
 """
 
+import sys
+
+# Fix Windows console encoding
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns

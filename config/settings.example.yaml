@@ -1,0 +1,60 @@
+# LinkedIn Job Analysis - Configuration Settings
+# ==============================================
+# Copy this file to settings.yaml and update values
+
+# Scraping Settings
+scraper:
+  keywords:
+    - "python developer"
+    - "data scientist"
+    - "software engineer"
+  locations:
+    - "Bangalore"
+    - "Mumbai"
+    - "Delhi"
+  max_jobs_per_search: 50
+  delay_between_requests: 2
+
+# Analysis Settings
+analysis:
+  top_n_results: 15
+
+# Report Settings
+report:
+  format: "html"
+  auto_open: true
+
+# Scheduler Settings
+scheduler:
+  enabled: false
+  run_time: "09:00"
+  frequency: "daily"
+
+# Email Notifications (fill in your details)
+email:
+  enabled: false
+  smtp_server: "smtp.gmail.com"
+  smtp_port: 587
+  sender_email: ""
+  sender_password: ""
+  recipient_email: ""
+
+# Slack Notifications
+slack:
+  enabled: false
+  webhook_url: ""
+
+# Discord Notifications
+discord:
+  enabled: false
+  webhook_url: ""
+
+# Dashboard Settings
+dashboard:
+  port: 5000
+  host: "127.0.0.1"
+
+# API Settings
+api:
+  port: 8000
+  host: "127.0.0.1"

@@ -1,165 +1,218 @@
-# LinkedIn Job Trend Analysis
+# LinkedIn Job Analysis Tool
 
-A comprehensive data analysis project for scraping, cleaning, analyzing, and visualizing job market trends from job postings.
+A comprehensive Python tool for scraping, analyzing, and visualizing job market data. Get insights on in-demand skills, top companies, salary predictions, and personalized job recommendations.
 
-## 🎯 Project Overview
+![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-This project analyzes job market trends to identify:
-- Most in-demand technical skills
-- Geographic distribution of job opportunities
-- Role-specific skill requirements
-- Career recommendations based on market data
+## Features
 
-## 📁 Project Structure
+- **Job Scraping** - Fetch real-time job listings from APIs
+- **Data Analysis** - Extract insights on skills, companies, locations
+- **Visualizations** - Charts and graphs for job market trends
+- **Resume Matching** - Match your skills to job listings
+- **Salary Prediction** - Predict salary based on role, location, skills
+- **Job Alerts** - Get notified when jobs match your criteria
+- **Web Dashboard** - View all insights in a web browser
+- **REST API** - Access data programmatically
+- **Export** - Export to Excel, PDF, CSV
 
-```
-linkedin_job_analysis/
-│
-├── data/
-│   ├── raw/              # Raw scraped data
-│   └── processed/        # Cleaned and processed data
-├── notebooks/
-│   └── job_analysis.ipynb  # Interactive Jupyter notebook
-├── scripts/
-│   ├── scraper.py        # Web scraping script
-│   ├── cleaner.py        # Data cleaning script
-│   └── analyzer.py       # Analysis and visualization script
-├── visualizations/       # Output charts and reports
-├── requirements.txt      # Python dependencies
-└── README.md
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.9+
-- pip package manager
+## Quick Start
 
 ### Installation
 
-1. Clone or navigate to the project directory:
 ```bash
-cd linkedin_job_analysis
-```
+# Clone the repository
+git clone https://github.com/yourusername/Linkedin-Job-Analysis.git
+cd Linkedin-Job-Analysis
 
-2. Install dependencies:
-```bash
+# Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Running the Analysis
-
-#### Option 1: Using Python Scripts
+### Run the Complete Flow
 
 ```bash
-# Step 1: Generate/Scrape data
-cd scripts
-python scraper.py
+# Interactive mode - asks for data source (Real-time API or Local)
+python scripts/master_flow.py
 
-# Step 2: Clean the data
-python cleaner.py
+# Use real-time API data
+python scripts/master_flow.py --realtime
 
-# Step 3: Run analysis and generate visualizations
-python analyzer.py
+# Use local stored data
+python scripts/master_flow.py --local
+
+# Quick mode (minimal prompts)
+python scripts/master_flow.py --local --quick
 ```
 
-#### Option 2: Using Jupyter Notebook (Recommended)
+### Using the CLI
 
 ```bash
-jupyter notebook notebooks/job_analysis.ipynb
+python scripts/cli.py <command> [options]
+
+# Available commands:
+python scripts/cli.py flow              # Run master flow
+python scripts/cli.py scrape            # Fetch fresh data from API
+python scripts/cli.py analyze           # Analyze job data
+python scripts/cli.py dashboard         # Start web dashboard
+python scripts/cli.py match --profile   # Create your profile
+python scripts/cli.py match             # Find matching jobs
+python scripts/cli.py predict "Python Developer" --location Bangalore
+python scripts/cli.py export --excel    # Export to Excel
+python scripts/cli.py alerts --check    # Check job alerts
+python scripts/cli.py insights          # Market insights
 ```
 
-## 📊 Output Deliverables
+## Project Structure
 
-After running the analysis, you'll get:
-
-### Visualizations (PNG files)
-- `top_skills_bar.png` - Top 15 most in-demand skills
-- `skills_city_heatmap.png` - Skill demand by city
-- `skills_role_heatmap.png` - Skill vs role matrix
-- `jobs_by_city.png` - Job distribution by city
-- `role_distribution.png` - Job distribution by role category
-
-### Interactive Charts (HTML files)
-- `interactive_skills.html` - Interactive skill demand chart
-- `interactive_heatmap.html` - Interactive skill-city heatmap
-
-### Reports (Excel)
-- `job_analysis_report_[timestamp].xlsx` - Complete analysis report
-
-## 🔧 Key Features
-
-### Data Collection
-- Sample data generation for testing
-- Built-in support for Indeed scraping
-- Rate limiting and user-agent rotation
-- Error handling and logging
-
-### Data Cleaning
-- Job title standardization
-- Skill normalization
-- Location parsing
-- Duplicate removal
-
-### Analysis
-- Skill demand frequency
-- Geographic analysis
-- Role-based analysis
-- Trend identification
-
-### Visualization
-- Publication-ready charts
-- Interactive Plotly visualizations
-- Heatmaps for cross-analysis
-- Export to multiple formats
-
-## 📈 Sample Insights
-
-After analysis, you'll discover:
-- **Top Skills**: Python, SQL, and cloud technologies dominate
-- **Hot Cities**: San Francisco, New York, Seattle lead in tech jobs
-- **Role Trends**: Data Science & ML roles show highest growth
-- **Skill Combos**: Which skills pair together for specific roles
-
-## ⚠️ Notes on Web Scraping
-
-LinkedIn has anti-scraping measures. This project includes:
-- **Sample data generator** for development/testing
-- **Indeed scraper** as an alternative source
-- **Rate limiting** to avoid blocking
-
-For production use, consider:
-- LinkedIn API (requires approval)
-- Job aggregator APIs
-- Public job datasets
-
-## 🛠️ Customization
-
-### Adding New Skills
-Edit the `SKILLS_DICTIONARY` in `scraper.py`:
-```python
-SKILLS_DICTIONARY = {
-    'python', 'java', 'your_new_skill', ...
-}
+```
+Linkedin-Job-Analysis/
+├── config/
+│   ├── settings.yaml           # Configuration
+│   ├── alerts/                 # Job alert definitions
+│   └── user_profile.json       # Your profile for matching
+├── data/
+│   ├── raw/                    # Scraped job data (CSV/JSON)
+│   ├── processed/              # Cleaned data
+│   ├── exports/                # Exported files (Excel, PDF)
+│   └── jobs.db                 # SQLite database
+├── scripts/
+│   ├── master_flow.py          # Main entry point
+│   ├── cli.py                  # Command-line interface
+│   ├── scraper_india.py        # Job scraper
+│   ├── analyze_jobs.py         # Data analysis
+│   ├── visualize_data.py       # Create charts
+│   ├── generate_report.py      # Generate reports
+│   ├── dashboard.py            # Web dashboard
+│   ├── api_server.py           # REST API
+│   ├── resume_matcher.py       # Resume matching
+│   ├── salary_predictor.py     # Salary prediction
+│   ├── job_alerts.py           # Job alerts
+│   ├── market_insights.py      # AI insights
+│   ├── export_manager.py       # Export to Excel/PDF
+│   └── ...
+├── outputs/
+│   ├── visualizations/         # PNG charts
+│   └── reports/                # HTML/JSON reports
+├── requirements.txt
+├── Dockerfile
+└── docker-compose.yml
 ```
 
-### Modifying Title Mappings
-Edit `TITLE_MAPPING` in `cleaner.py`:
-```python
-TITLE_MAPPING = {
-    r'your_pattern': 'Standardized Title',
-    ...
-}
+## Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MASTER FLOW                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  1. SELECT DATA SOURCE                                       │
+│     ├── [1] Real-time API (fresh data)                      │
+│     └── [2] Local stored data (instant)                     │
+│                                                              │
+│  2. ANALYZE DATA → Skills, Companies, Locations, Trends     │
+│                                                              │
+│  3. USER PROFILE → Your skills & preferences                │
+│                                                              │
+│  4. JOB MATCHING → Find best jobs for you                   │
+│                                                              │
+│  5. SKILL GAPS → What to learn + Certifications             │
+│                                                              │
+│  6. VISUALIZATIONS → Charts & Reports                       │
+│                                                              │
+│  7. DASHBOARD → View at http://localhost:5000               │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 📝 License
+## Screenshots
 
-This project is for educational purposes.
+### Dashboard
+- Overview with job statistics
+- Skills trending analysis
+- Jobs by company/location
+- Your profile matches
 
-## 🤝 Contributing
+### Reports
+- HTML reports with charts
+- Excel exports with multiple sheets
+- PDF professional reports
 
-Feel free to fork and enhance this project!
+## Configuration
 
----
+Edit `config/settings.yaml`:
 
-**Happy Analyzing! 📊**
+```yaml
+scraper:
+  keywords:
+    - "python developer"
+    - "data scientist"
+  locations:
+    - "Bangalore"
+    - "Mumbai"
+
+email:
+  enabled: false
+  smtp_server: "smtp.gmail.com"
+  sender_email: "your_email@gmail.com"
+
+scheduler:
+  enabled: false
+  run_time: "09:00"
+  frequency: "daily"
+```
+
+## API Endpoints
+
+Start API server: `python scripts/api_server.py`
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/jobs` | List all jobs |
+| `GET /api/jobs/search?q=python` | Search jobs |
+| `GET /api/stats` | Statistics |
+| `GET /api/skills` | Skill rankings |
+| `GET /api/companies` | Top companies |
+
+## Docker Deployment
+
+```bash
+# Build and run
+docker-compose up -d
+
+# Access
+# Dashboard: http://localhost:5000
+# API: http://localhost:8000
+```
+
+## Dependencies
+
+- pandas, numpy - Data processing
+- matplotlib, seaborn, plotly - Visualization
+- requests, beautifulsoup4 - Web scraping
+- openpyxl - Excel export
+- reportlab - PDF generation
+- pyyaml - Configuration
+- schedule - Task scheduling
+
+## License
+
+MIT License
+
+## Author
+
+Rohit Mane
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
