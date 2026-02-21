@@ -96,17 +96,9 @@ class UserProfile:
 class ResumeMatcher:
     """Match user profile to job listings."""
     
-    # Skill categories for better matching
-    SKILL_CATEGORIES = {
-        'programming': ['python', 'java', 'javascript', 'c++', 'c#', 'go', 'rust', 'scala', 'ruby', 'php'],
-        'frontend': ['react', 'angular', 'vue', 'html', 'css', 'typescript', 'jquery', 'bootstrap'],
-        'backend': ['node', 'django', 'flask', 'spring', 'fastapi', 'express', '.net', 'rails'],
-        'database': ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'oracle'],
-        'cloud': ['aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform', 'jenkins'],
-        'data': ['pandas', 'numpy', 'spark', 'hadoop', 'tableau', 'power bi', 'excel'],
-        'ml_ai': ['machine learning', 'deep learning', 'tensorflow', 'pytorch', 'nlp', 'computer vision'],
-        'devops': ['ci/cd', 'git', 'linux', 'ansible', 'puppet', 'monitoring', 'grafana']
-    }
+    # Skill categories for better matching (loaded from centralized config)
+    from skills_loader import SKILL_CATEGORIES as _SKILL_CATEGORIES
+    SKILL_CATEGORIES = _SKILL_CATEGORIES
     
     def __init__(self, profile: UserProfile = None):
         self.profile = profile or UserProfile.load()
@@ -430,10 +422,32 @@ def main():
     parser.add_argument('--profile', action='store_true', help='Create/edit your profile')
     parser.add_argument('--match', action='store_true', help='Find matching jobs')
     parser.add_argument('--gaps', action='store_true', help='Analyze skill gaps')
+    parser.add_argument('--from-pdf', type=str, metavar='PDF_PATH',
+                        help='Create profile from a PDF resume before matching')
+    parser.add_argument('--semantic', action='store_true',
+                        help='Use semantic (embedding) matching instead of keyword matching')
     parser.add_argument('--min-score', type=int, default=40, help='Minimum match score (default: 40)')
     parser.add_argument('--limit', type=int, default=15, help='Maximum results (default: 15)')
     
     args = parser.parse_args()
+    
+    # Handle --from-pdf: parse PDF and create profile first
+    if args.from_pdf:
+        try:
+            from resume_parser import parse_pdf
+            profile_data = parse_pdf(args.from_pdf)
+            if "error" in profile_data:
+                print(f"[X] PDF parsing error: {profile_data['error']}")
+                return
+            profile = UserProfile.from_dict(profile_data)
+            profile.save()
+            print(f"[OK] Profile created from PDF: {args.from_pdf}")
+            # Continue to matching if --match or --gaps also specified
+            if not args.match and not args.gaps:
+                return
+        except ImportError:
+            print("[X] pdfplumber not installed. Run: pip install pdfplumber")
+            return
     
     if args.profile:
         create_profile_interactive()
@@ -441,18 +455,46 @@ def main():
     elif args.match:
         profile = UserProfile.load()
         if not profile.skills:
-            print("[X] No profile found. Create one first with --profile")
+            print("[X] No profile found. Create one first with --profile or --from-pdf")
             return
         
-        matcher = ResumeMatcher(profile)
-        matcher.find_matches(min_score=args.min_score, limit=args.limit)
-        matcher.display_matches()
-        matcher.save_matches_report()
+        if args.semantic:
+            # Use embedding-based semantic matching
+            try:
+                from embedding_matcher import SemanticMatcher
+                sem = SemanticMatcher()
+                matcher = ResumeMatcher(profile)
+                matcher.load_jobs()
+                if not matcher.jobs:
+                    print("[X] No job data found")
+                    return
+                results = sem.match_profile_to_jobs(profile.to_dict(), matcher.jobs, top_k=args.limit)
+                print(f"\n{'='*70}")
+                print(f"TOP {len(results)} SEMANTIC MATCHES FOR: {profile.name or 'You'}")
+                print(f"{'='*70}")
+                for i, r in enumerate(results, 1):
+                    job = r["job"]
+                    print(f"\n[{i}] {job.get('title', 'N/A')} — {r['score']:.0f}% Match")
+                    print(f"    Company:  {job.get('company', 'N/A')}")
+                    print(f"    Location: {job.get('location', 'N/A')}")
+                print("=" * 70)
+            except ImportError:
+                print("[!] sentence-transformers not installed. Falling back to keyword matching.")
+                print("    Install: pip install sentence-transformers")
+                matcher = ResumeMatcher(profile)
+                matcher.find_matches(min_score=args.min_score, limit=args.limit)
+                matcher.display_matches()
+                matcher.save_matches_report()
+        else:
+            matcher = ResumeMatcher(profile)
+            matcher.find_matches(min_score=args.min_score, limit=args.limit)
+            matcher.display_matches()
+            matcher.save_matches_report()
     
     elif args.gaps:
         profile = UserProfile.load()
         if not profile.skills:
-            print("[X] No profile found. Create one first with --profile")
+            print("[X] No profile found. Create one first with --profile or --from-pdf")
             return
         
         matcher = ResumeMatcher(profile)
@@ -464,9 +506,11 @@ def main():
         print("\n" + "=" * 60)
         print("EXAMPLES:")
         print("=" * 60)
-        print("  python resume_matcher.py --profile      # Create your profile")
-        print("  python resume_matcher.py --match        # Find matching jobs")
-        print("  python resume_matcher.py --gaps         # Analyze skill gaps")
+        print("  python resume_matcher.py --profile                   # Create your profile")
+        print("  python resume_matcher.py --from-pdf resume.pdf       # Profile from PDF")
+        print("  python resume_matcher.py --match                     # Find matching jobs")
+        print("  python resume_matcher.py --match --semantic          # Semantic matching")
+        print("  python resume_matcher.py --gaps                      # Analyze skill gaps")
         print("  python resume_matcher.py --match --min-score 60 --limit 10")
 
 

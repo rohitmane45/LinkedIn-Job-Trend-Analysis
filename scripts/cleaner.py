@@ -18,148 +18,38 @@ from pathlib import Path
 from datetime import datetime
 from collections import Counter
 import json
+import logging
+from skills_loader import SKILL_NORMALIZATION
+
+logger = logging.getLogger(__name__)
 
 class JobDataCleaner:
     """Clean and standardize job data."""
+    # Skill normalization mapping (loaded from centralized config)
+    SKILL_NORMALIZATION = SKILL_NORMALIZATION
     
-    def __init__(self):
-        # Master skills dictionary - common tech skills
-        self.skills_dict = {
-            # Programming Languages
-            'python': ['python', 'python3', 'py'],
-            'javascript': ['javascript', 'js', 'ecmascript'],
-            'java': ['java', 'j2ee', 'jvm'],
-            'sql': ['sql', 'mysql', 'postgresql', 'postgres', 'sqlite', 'tsql', 'plsql'],
-            'r': ['r programming', 'r language', 'rstudio'],
-            'c++': ['c++', 'cpp', 'c plus plus'],
-            'c#': ['c#', 'csharp', 'c sharp'],
-            'typescript': ['typescript', 'ts'],
-            'scala': ['scala'],
-            'go': ['golang', 'go language'],
-            'rust': ['rust'],
-            'php': ['php'],
-            'ruby': ['ruby', 'rails', 'ruby on rails'],
-            'swift': ['swift'],
-            'kotlin': ['kotlin'],
-            
-            # Data Science & ML
-            'machine learning': ['machine learning', 'ml', 'deep learning', 'dl'],
-            'data science': ['data science', 'data scientist'],
-            'artificial intelligence': ['artificial intelligence', 'ai', 'generative ai', 'genai'],
-            'nlp': ['nlp', 'natural language processing', 'text mining'],
-            'computer vision': ['computer vision', 'cv', 'image processing'],
-            'tensorflow': ['tensorflow', 'tf'],
-            'pytorch': ['pytorch', 'torch'],
-            'scikit-learn': ['scikit-learn', 'sklearn', 'scikit learn'],
-            'pandas': ['pandas'],
-            'numpy': ['numpy'],
-            'keras': ['keras'],
-            
-            # Cloud & DevOps
-            'aws': ['aws', 'amazon web services', 'ec2', 's3', 'lambda'],
-            'azure': ['azure', 'microsoft azure'],
-            'gcp': ['gcp', 'google cloud', 'google cloud platform'],
-            'docker': ['docker', 'containerization'],
-            'kubernetes': ['kubernetes', 'k8s'],
-            'terraform': ['terraform'],
-            'jenkins': ['jenkins'],
-            'ci/cd': ['ci/cd', 'cicd', 'continuous integration', 'continuous deployment'],
-            'git': ['git', 'github', 'gitlab', 'bitbucket'],
-            'linux': ['linux', 'unix', 'ubuntu', 'centos'],
-            
-            # Databases
-            'mongodb': ['mongodb', 'mongo'],
-            'redis': ['redis'],
-            'elasticsearch': ['elasticsearch', 'elastic search', 'elk'],
-            'cassandra': ['cassandra'],
-            'dynamodb': ['dynamodb'],
-            'oracle': ['oracle', 'oracle db'],
-            
-            # Big Data
-            'spark': ['spark', 'apache spark', 'pyspark'],
-            'hadoop': ['hadoop', 'hdfs', 'hive'],
-            'kafka': ['kafka', 'apache kafka'],
-            'airflow': ['airflow', 'apache airflow'],
-            'databricks': ['databricks'],
-            'snowflake': ['snowflake'],
-            
-            # Web & Frameworks
-            'react': ['react', 'reactjs', 'react.js'],
-            'angular': ['angular', 'angularjs'],
-            'vue': ['vue', 'vuejs', 'vue.js'],
-            'node.js': ['node', 'nodejs', 'node.js'],
-            'django': ['django'],
-            'flask': ['flask'],
-            'fastapi': ['fastapi', 'fast api'],
-            'spring': ['spring', 'spring boot', 'springboot'],
-            'rest api': ['rest', 'rest api', 'restful', 'api'],
-            
-            # BI & Visualization
-            'tableau': ['tableau'],
-            'power bi': ['power bi', 'powerbi'],
-            'looker': ['looker'],
-            'excel': ['excel', 'ms excel', 'microsoft excel', 'advanced excel'],
-            
-            # Soft Skills
-            'agile': ['agile', 'scrum', 'kanban', 'jira'],
-            'communication': ['communication', 'presentation'],
-            'leadership': ['leadership', 'team lead', 'management'],
-        }
-        
-        # Job title standardization mapping
-        self.title_mapping = {
-            # Data roles
-            'data analyst': ['data analyst', 'business data analyst', 'sr data analyst', 
-                           'junior data analyst', 'data analyst i', 'data analyst ii'],
-            'data scientist': ['data scientist', 'sr data scientist', 'junior data scientist',
-                              'data scientist i', 'data scientist ii', 'applied scientist'],
-            'data engineer': ['data engineer', 'sr data engineer', 'big data engineer',
-                             'data engineer i', 'data engineer ii', 'etl developer'],
-            'ml engineer': ['machine learning engineer', 'ml engineer', 'mlops engineer',
-                          'ai engineer', 'deep learning engineer'],
-            'analytics engineer': ['analytics engineer', 'bi engineer'],
-            
-            # Software roles
-            'software engineer': ['software engineer', 'software developer', 'sde',
-                                 'software engineer i', 'software engineer ii', 'programmer'],
-            'backend engineer': ['backend engineer', 'backend developer', 'server developer'],
-            'frontend engineer': ['frontend engineer', 'frontend developer', 'ui developer'],
-            'fullstack engineer': ['fullstack engineer', 'full stack developer', 'fullstack developer'],
-            'devops engineer': ['devops engineer', 'site reliability engineer', 'sre', 
-                               'platform engineer', 'infrastructure engineer'],
-            
-            # Management roles
-            'engineering manager': ['engineering manager', 'tech lead', 'technical lead',
-                                   'development manager', 'software manager'],
-            'product manager': ['product manager', 'pm', 'product owner', 'technical pm'],
-            'project manager': ['project manager', 'program manager', 'delivery manager'],
-            
-            # Analyst roles
-            'business analyst': ['business analyst', 'ba', 'systems analyst'],
-            'financial analyst': ['financial analyst', 'finance analyst'],
-            'marketing analyst': ['marketing analyst', 'digital analyst'],
-        }
-        
-        # Indian cities standardization
-        self.city_mapping = {
-            'bangalore': ['bangalore', 'bengaluru', 'blr', 'banglore'],
-            'mumbai': ['mumbai', 'bombay'],
-            'delhi': ['delhi', 'new delhi', 'delhi ncr', 'ncr'],
-        'dl': 'deep learning',
-        'artificial intelligence': 'ai',
-        'natural language processing': 'nlp',
-        'sklearn': 'scikit-learn',
-        'sci-kit learn': 'scikit-learn',
-        'tf': 'tensorflow',
-        'tensor flow': 'tensorflow',
-        'py torch': 'pytorch',
-        
-        # Tools
-        'ms excel': 'excel',
-        'microsoft excel': 'excel',
-        'powerbi': 'power bi',
-        'github actions': 'github',
-        'gitlab ci': 'gitlab',
+    # Job title standardization mapping
+    TITLE_MAPPING = {
+        # Data roles
+        r'data\s*analyst': 'Data Analyst',
+        r'data\s*scien': 'Data Scientist',
+        r'data\s*engineer': 'Data Engineer',
+        r'machine\s*learning|ml\s*engineer|mlops|ai\s*engineer': 'ML Engineer',
+        r'analytics\s*engineer|bi\s*engineer': 'Analytics Engineer',
+        # Software roles
+        r'software\s*(?:engineer|developer)|\bsde\b|programmer': 'Software Engineer',
+        r'backend\s*(?:engineer|developer)|server\s*developer': 'Backend Engineer',
+        r'frontend\s*(?:engineer|developer)|ui\s*developer': 'Frontend Engineer',
+        r'fullstack|full\s*stack': 'Full Stack Engineer',
+        r'devops|site\s*reliability|\bsre\b|platform\s*engineer|infrastructure\s*engineer': 'DevOps Engineer',
+        # Management roles
+        r'engineering\s*manager|tech\s*lead|technical\s*lead': 'Engineering Manager',
+        r'product\s*manager|product\s*owner': 'Product Manager',
+        r'project\s*manager|program\s*manager|delivery\s*manager': 'Project Manager',
+        # Analyst roles
+        r'business\s*analyst|systems\s*analyst': 'Business Analyst',
+        r'financial?\s*analyst': 'Financial Analyst',
+        r'marketing\s*analyst|digital\s*analyst': 'Marketing Analyst',
     }
     
     # City standardization

@@ -33,6 +33,8 @@ services:
   # Scheduler service (runs pipeline automatically)
   scheduler:
     build: .
+    profiles:
+      - automation
     volumes:
       - ./data:/app/data
       - ./outputs:/app/outputs
@@ -40,5 +42,3 @@ services:
       - ./logs:/app/logs
     command: python scripts/scheduler.py --start
     restart: unless-stopped
-    depends_on:
-      - dashboard

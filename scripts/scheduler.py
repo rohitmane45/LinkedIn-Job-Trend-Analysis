@@ -67,7 +67,7 @@ class PipelineScheduler:
         self._log("🚀 Starting scheduled pipeline run...")
         self.last_run = datetime.now()
         
-        pipeline_script = SCRIPTS_DIR / 'run_pipeline.py'
+        pipeline_script = SCRIPTS_DIR / 'master_flow.py'
         
         if not pipeline_script.exists():
             self._log("❌ Pipeline script not found!")
@@ -75,7 +75,7 @@ class PipelineScheduler:
         
         try:
             result = subprocess.run(
-                [sys.executable, str(pipeline_script), '--notify'],
+                [sys.executable, str(pipeline_script)],
                 capture_output=True,
                 text=True
             )

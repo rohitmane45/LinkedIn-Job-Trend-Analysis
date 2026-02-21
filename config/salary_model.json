@@ -1,113 +1,13 @@
 {
-  "salary_samples": [
-    {
-      "title": "Data Engineer | 4 to 8 Years | 15 to 22 LPA | One of the Leading Big4",
-      "location": "Mumbai, Maharashtra",
-      "salary_min": 15.0,
-      "salary_max": 22.0
-    },
-    {
-      "title": "Data Analyst",
-      "location": "Mumbai, Maharashtra",
-      "salary_min": 18.0,
-      "salary_max": 22.0
-    },
-    {
-      "title": "Data Analyst",
-      "location": "Mumbai, Maharashtra",
-      "salary_min": 16.2,
-      "salary_max": 19.8
-    },
-    {
-      "title": "Python Developer",
-      "location": "Mumbai, Maharashtra",
-      "salary_min": 10.8,
-      "salary_max": 13.200000000000001
-    },
-    {
-      "title": "Python Developer",
-      "location": "Mumbai, Maharashtra",
-      "salary_min": 7.2,
-      "salary_max": 12.0
-    },
-    {
-      "title": "Python Developer",
-      "location": "Mumbai, Maharashtra",
-      "salary_min": 8.1,
-      "salary_max": 9.9
-    },
-    {
-      "title": "Sr Python Developer",
-      "location": "Mumbai, Maharashtra",
-      "salary_min": 10.0,
-      "salary_max": 15.0
-    },
-    {
-      "title": "Python Developer",
-      "location": "Hyderabad, Telangana",
-      "salary_min": 18.0,
-      "salary_max": 22.0
-    },
-    {
-      "title": "Head- Data Science",
-      "location": "Delhi, India",
-      "salary_min": 1.8,
-      "salary_max": 2.2
-    },
-    {
-      "title": "Python Developer",
-      "location": "Delhi, India",
-      "salary_min": 4.0,
-      "salary_max": 5.0
-    },
-    {
-      "title": "Data Engineer",
-      "location": "Delhi, India",
-      "salary_min": 1.8,
-      "salary_max": 2.2
-    }
-  ],
-  "role_averages": {
-    "data": {
-      "min": 2.0,
-      "max": 20.0,
-      "avg": 14.625,
-      "count": 4
-    },
-    "python": {
-      "min": 4.5,
-      "max": 20.0,
-      "avg": 11.02,
-      "count": 5
-    },
-    "sr": {
-      "min": 12.5,
-      "max": 12.5,
-      "avg": 12.5,
-      "count": 1
-    },
-    "head-": {
-      "min": 2.0,
-      "max": 2.0,
-      "avg": 2.0,
-      "count": 1
-    }
-  },
-  "location_averages": {
-    "mumbai": {
-      "avg": 14.228571428571428,
-      "count": 7
-    },
-    "hyderabad": {
-      "avg": 20.0,
-      "count": 1
-    },
-    "delhi": {
-      "avg": 2.8333333333333335,
-      "count": 3
-    }
-  },
-  "trained_at": "2026-01-16T15:22:26.038735",
-  "jobs_analyzed": 1367,
-  "salaries_found": 11
+  "trained_at": "2026-02-22T01:03:53.064947",
+  "model_type": "GradientBoostingRegressor",
+  "n_training_samples": 6,
+  "features": [
+    "title_encoded",
+    "location_encoded",
+    "company_size_encoded",
+    "skill_count",
+    "premium_skill_count",
+    "experience_level"
+  ]
 }

@@ -20,20 +20,18 @@ from pathlib import Path
 from collections import Counter
 from datetime import datetime
 import json
+from skills_loader import TECH_SKILLS as _TECH_SKILLS
+
+# Project paths
+PROJECT_ROOT = Path(__file__).parent.parent
+DATA_DIR = PROJECT_ROOT / 'data' / 'raw'
+REPORTS_DIR = PROJECT_ROOT / 'outputs' / 'reports'
 
 class JobAnalyzer:
     """Analyze job listings data."""
     
-    # Common tech skills to look for
-    TECH_SKILLS = [
-        'python', 'java', 'javascript', 'sql', 'aws', 'azure', 'docker',
-        'kubernetes', 'react', 'node', 'angular', 'vue', 'mongodb', 'postgresql',
-        'mysql', 'git', 'linux', 'machine learning', 'deep learning', 'ai',
-        'data science', 'tensorflow', 'pytorch', 'spark', 'hadoop', 'tableau',
-        'power bi', 'excel', 'r', 'scala', 'go', 'rust', 'c++', 'c#', '.net',
-        'django', 'flask', 'fastapi', 'spring', 'microservices', 'api', 'rest',
-        'graphql', 'agile', 'scrum', 'jira', 'jenkins', 'ci/cd', 'devops'
-    ]
+    # Common tech skills to look for (loaded from centralized config)
+    TECH_SKILLS = _TECH_SKILLS
     
     def __init__(self, data_path: str = None):
         self.data_path = Path(data_path) if data_path else None
@@ -123,6 +121,21 @@ class JobAnalyzer:
             'data': sorted_skills,
             'top_10': dict(list(sorted_skills.items())[:10])
         }
+        
+        # NLP-based skill discovery (co-occurrence analysis)
+        if 'skills' in self.df.columns:
+            try:
+                from nlp_skill_extractor import SkillCooccurrenceAnalyzer
+                nlp = SkillCooccurrenceAnalyzer()
+                nlp_results = nlp.analyze(self.df)
+                self.analysis_results['skills']['discovered'] = nlp_results.get('emerging', [])
+                self.analysis_results['skills']['clusters'] = nlp_results.get('clusters', {})
+                self.analysis_results['skills']['cooccurrence'] = nlp_results.get('cooccurrence', [])
+                discovered_count = len(nlp_results.get('emerging', []))
+                if discovered_count:
+                    print(f"🔍 NLP discovered {discovered_count} emerging skills")
+            except Exception as e:
+                print(f"⚠️ NLP skill extraction skipped: {e}")
         
         print(f"🔧 Extracted {len(sorted_skills)} different skills")
         return self.analysis_results['skills']
@@ -247,7 +260,7 @@ class JobAnalyzer:
     def save_results(self, output_path: str = None):
         """Save analysis results to JSON file."""
         if not output_path:
-            output_dir = Path('d:/Linkedin-Job-Analysis/outputs/reports')
+            output_dir = REPORTS_DIR
             output_dir.mkdir(parents=True, exist_ok=True)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             output_path = output_dir / f'analysis_{timestamp}.json'
@@ -261,7 +274,7 @@ class JobAnalyzer:
 
 def find_latest_data_file():
     """Find the most recent data file."""
-    data_dir = Path('d:/Linkedin-Job-Analysis/data/raw')
+    data_dir = DATA_DIR
     
     if not data_dir.exists():
         return None

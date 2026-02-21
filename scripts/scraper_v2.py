@@ -11,7 +11,10 @@ Date: January 2026
 """
 
 import requests
-from bs4 import BeautifulSoup
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
 import pandas as pd
 import time
 import random
@@ -23,6 +26,7 @@ from pathlib import Path
 from tqdm import tqdm
 from urllib.parse import urlencode, quote_plus
 import hashlib
+from scraper_constants import USER_AGENTS, INDIAN_CITIES
 
 # Configure logging
 logging.basicConfig(
@@ -35,93 +39,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# User agents for rotation
-USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/121.0.0.0',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
-]
-
-# Comprehensive skills dictionary for extraction
-SKILLS_DICTIONARY = {
-    # Programming Languages
-    'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'ruby', 'go', 'golang',
-    'rust', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'perl', 'shell', 'bash',
-    'powershell', 'vba', 'lua', 'haskell', 'clojure', 'elixir', 'f#', 'dart', 'groovy',
-    
-    # Data & Analytics
-    'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'oracle', 'redis', 'elasticsearch',
-    'pandas', 'numpy', 'scipy', 'matplotlib', 'seaborn', 'plotly', 'tableau', 'power bi',
-    'excel', 'spark', 'hadoop', 'hive', 'kafka', 'airflow', 'dbt', 'snowflake',
-    'redshift', 'bigquery', 'databricks', 'looker', 'qlik', 'sas', 'spss', 'stata',
-    'data modeling', 'etl', 'data warehousing', 'data pipeline',
-    
-    # Machine Learning & AI
-    'machine learning', 'deep learning', 'neural networks', 'tensorflow', 'pytorch',
-    'keras', 'scikit-learn', 'sklearn', 'nlp', 'natural language processing',
-    'computer vision', 'opencv', 'llm', 'gpt', 'transformers', 'huggingface',
-    'reinforcement learning', 'xgboost', 'lightgbm', 'catboost', 'mlflow',
-    'mlops', 'feature engineering', 'model deployment', 'langchain', 'openai',
-    
-    # Cloud & DevOps
-    'aws', 'azure', 'gcp', 'google cloud', 'docker', 'kubernetes', 'k8s',
-    'terraform', 'ansible', 'jenkins', 'ci/cd', 'git', 'github', 'gitlab',
-    'linux', 'unix', 'windows server', 'cloudformation', 'pulumi', 'helm',
-    'prometheus', 'grafana', 'datadog', 'splunk', 'new relic', 'cloudwatch',
-    'lambda', 'ec2', 's3', 'rds', 'ecs', 'eks', 'fargate',
-    
-    # Web Development
-    'html', 'css', 'react', 'reactjs', 'angular', 'vue', 'vuejs', 'node.js', 'nodejs',
-    'express', 'django', 'flask', 'fastapi', 'spring', 'spring boot', 'rest api',
-    'graphql', 'microservices', 'next.js', 'nuxt', 'svelte', 'tailwind', 'bootstrap',
-    'webpack', 'vite', 'redux', 'mobx', 'sass', 'less', 'jquery', 'asp.net',
-    
-    # Mobile Development
-    'ios', 'android', 'react native', 'flutter', 'xamarin', 'ionic', 'swiftui',
-    
-    # Databases
-    'dynamodb', 'cassandra', 'couchdb', 'neo4j', 'mariadb', 'sqlite', 'firebase',
-    
-    # Testing
-    'junit', 'pytest', 'jest', 'selenium', 'cypress', 'playwright', 'postman',
-    'unit testing', 'integration testing', 'test automation', 'qa', 'quality assurance',
-    
-    # Security
-    'cybersecurity', 'penetration testing', 'owasp', 'soc', 'siem', 'encryption',
-    'authentication', 'oauth', 'jwt', 'ssl', 'tls', 'firewall', 'vpn',
-    
-    # Soft Skills & Methodologies
-    'agile', 'scrum', 'kanban', 'jira', 'confluence', 'communication', 'leadership',
-    'problem solving', 'teamwork', 'project management', 'stakeholder management',
-    'product management', 'technical writing', 'documentation', 'mentoring',
-}
-
-# Skill categories for better classification
-SKILL_CATEGORIES = {
-    'Programming Languages': ['python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'ruby', 'go', 'rust', 'php', 'swift', 'kotlin', 'scala', 'r'],
-    'Data & Analytics': ['sql', 'pandas', 'numpy', 'tableau', 'power bi', 'excel', 'spark', 'hadoop', 'snowflake', 'bigquery', 'looker'],
-    'Machine Learning': ['machine learning', 'deep learning', 'tensorflow', 'pytorch', 'scikit-learn', 'nlp', 'computer vision', 'llm'],
-    'Cloud': ['aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform', 'lambda', 'ec2', 's3'],
-    'Web Development': ['react', 'angular', 'vue', 'node.js', 'django', 'flask', 'fastapi', 'rest api', 'graphql'],
-    'DevOps': ['ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'ansible', 'prometheus', 'grafana'],
-}
-
-# Add Indian cities configuration
-INDIAN_CITIES = {
-    'bangalore': {'city': 'Bangalore', 'state': 'Karnataka', 'adzuna_location': 'bangalore'},
-    'mumbai': {'city': 'Mumbai', 'state': 'Maharashtra', 'adzuna_location': 'mumbai'},
-    'pune': {'city': 'Pune', 'state': 'Maharashtra', 'adzuna_location': 'pune'},
-    'hyderabad': {'city': 'Hyderabad', 'state': 'Telangana', 'adzuna_location': 'hyderabad'},
-    'chennai': {'city': 'Chennai', 'state': 'Tamil Nadu', 'adzuna_location': 'chennai'},
-    'delhi': {'city': 'Delhi', 'state': 'Delhi NCR', 'adzuna_location': 'delhi'},
-    'noida': {'city': 'Noida', 'state': 'Uttar Pradesh', 'adzuna_location': 'noida'},
-    'gurgaon': {'city': 'Gurgaon', 'state': 'Haryana', 'adzuna_location': 'gurgaon'},
-    'kolkata': {'city': 'Kolkata', 'state': 'West Bengal', 'adzuna_location': 'kolkata'},
-    'ahmedabad': {'city': 'Ahmedabad', 'state': 'Gujarat', 'adzuna_location': 'ahmedabad'},
-}
+# Import centralized skills configuration
+from skills_loader import SKILLS_DICTIONARY, SKILL_CATEGORIES, SKILL_ALIASES
 
 
 class EnhancedJobScraper:
@@ -214,24 +133,7 @@ class EnhancedJobScraper:
                 found_skills.add(skill)
         
         # Handle special cases
-        skill_aliases = {
-            'js': 'javascript',
-            'ts': 'typescript',
-            'py': 'python',
-            'node': 'node.js',
-            'k8s': 'kubernetes',
-            'postgres': 'postgresql',
-            'mongo': 'mongodb',
-            'tf': 'tensorflow',
-            'ml': 'machine learning',
-            'dl': 'deep learning',
-            'ai': 'artificial intelligence',
-            'aws s3': 's3',
-            'aws lambda': 'lambda',
-            'amazon web services': 'aws',
-            'google cloud platform': 'gcp',
-            'microsoft azure': 'azure',
-        }
+        skill_aliases = SKILL_ALIASES
         
         for alias, skill in skill_aliases.items():
             pattern = r'\b' + re.escape(alias) + r'\b'

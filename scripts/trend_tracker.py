@@ -35,11 +35,9 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 class TrendTracker:
     """Track job market trends over time."""
     
-    SKILLS_TO_TRACK = [
-        'python', 'java', 'javascript', 'sql', 'aws', 'azure', 'docker',
-        'kubernetes', 'react', 'node', 'angular', 'mongodb', 'postgresql',
-        'machine learning', 'ai', 'data science', 'devops', 'cloud'
-    ]
+    # Skills to track (loaded from centralized config)
+    from skills_loader import SKILLS_TO_TRACK as _SKILLS_TO_TRACK
+    SKILLS_TO_TRACK = _SKILLS_TO_TRACK
     
     def __init__(self):
         self.history = self._load_history()
@@ -237,6 +235,30 @@ class TrendTracker:
                     trend = "[^]" if change > 0 else "[v]" if change < 0 else "[-]"
                     report.append(f"  {trend} {skill.upper()}: {first} -> {last} ({change:+d})")
         
+        # Forecast section
+        forecasts = self.forecast_skills()
+        if forecasts:
+            report.append("\n" + "-" * 40)
+            report.append("Skill Demand Forecast (90-day):")
+            for item in forecasts[:10]:
+                direction = "[^]" if item['growth_rate'] > 0 else "[v]" if item['growth_rate'] < 0 else "[-]"
+                report.append(
+                    f"  {direction} {item['skill'].upper()}: "
+                    f"predicted {item['predicted_count']:.0f} mentions "
+                    f"(R²={item['confidence']:.2f})"
+                )
+        
+        # Growth rankings
+        rankings = self.get_growth_rankings()
+        if rankings.get('rising'):
+            report.append("\n" + "-" * 40)
+            report.append("Growth Rankings:")
+            report.append("  RISING:    " + ", ".join(s.upper() for s in rankings['rising'][:5]))
+            if rankings.get('stable'):
+                report.append("  STABLE:    " + ", ".join(s.upper() for s in rankings['stable'][:5]))
+            if rankings.get('declining'):
+                report.append("  DECLINING: " + ", ".join(s.upper() for s in rankings['declining'][:5]))
+        
         report.append("\n" + "=" * 60)
         
         report_text = "\n".join(report)
@@ -250,12 +272,109 @@ class TrendTracker:
         
         return report_text
 
+    # ──────────────────────────────────────────────────────────
+    # Forecasting
+    # ──────────────────────────────────────────────────────────
+
+    def forecast_skills(self, horizon_days: int = 90) -> List[Dict]:
+        """
+        Forecast future skill demand using linear regression.
+
+        Fits a line (numpy polyfit, degree 1) on each skill's historical
+        counts and extrapolates forward by `horizon_days`.
+
+        Returns:
+            List of dicts sorted by growth rate, each containing:
+            - skill: skill name
+            - current_count: latest known count
+            - predicted_count: forecasted count at horizon
+            - growth_rate: slope (change per day)
+            - confidence: R² score (0-1)
+        """
+        import numpy as np
+
+        skill_trends = self.get_skill_trends()
+        if not skill_trends:
+            return []
+
+        results = []
+        for skill, history in skill_trends.items():
+            if len(history) < 2:
+                continue
+
+            # Convert dates to numeric (days from first date)
+            try:
+                dates = [datetime.strptime(h['date'], '%Y-%m-%d') for h in history]
+            except (ValueError, KeyError):
+                continue
+
+            base_date = dates[0]
+            x = np.array([(d - base_date).days for d in dates], dtype=float)
+            y = np.array([h['count'] for h in history], dtype=float)
+
+            if len(set(x)) < 2:
+                # All same date — can't fit a line
+                continue
+
+            # Fit linear regression
+            coeffs = np.polyfit(x, y, 1)
+            slope, intercept = coeffs
+
+            # Predict at horizon
+            last_day = x[-1]
+            forecast_day = last_day + horizon_days
+            predicted = slope * forecast_day + intercept
+            predicted = max(0, predicted)  # Can't have negative mentions
+
+            # R² confidence
+            y_pred = np.polyval(coeffs, x)
+            ss_res = np.sum((y - y_pred) ** 2)
+            ss_tot = np.sum((y - np.mean(y)) ** 2)
+            r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+            r_squared = max(0, min(1, r_squared))
+
+            results.append({
+                'skill': skill,
+                'current_count': int(y[-1]),
+                'predicted_count': round(predicted, 1),
+                'growth_rate': round(slope, 4),
+                'confidence': round(r_squared, 3),
+                'data_points': len(history),
+            })
+
+        # Sort by growth rate descending
+        results.sort(key=lambda r: r['growth_rate'], reverse=True)
+        return results
+
+    def get_growth_rankings(self) -> Dict:
+        """
+        Categorize skills into rising, stable, and declining groups
+        based on their linear growth rate.
+
+        Returns:
+            dict with keys 'rising', 'stable', 'declining', each a list of skill names.
+        """
+        forecasts = self.forecast_skills()
+        if not forecasts:
+            return {'rising': [], 'stable': [], 'declining': []}
+
+        rising = [f['skill'] for f in forecasts if f['growth_rate'] > 0.1]
+        declining = [f['skill'] for f in forecasts if f['growth_rate'] < -0.1]
+        stable = [f['skill'] for f in forecasts if -0.1 <= f['growth_rate'] <= 0.1]
+
+        return {
+            'rising': rising,
+            'stable': stable,
+            'declining': declining,
+        }
+
 
 def main():
     parser = argparse.ArgumentParser(description='Track Job Market Trends')
     parser.add_argument('--snapshot', action='store_true', help='Record current snapshot')
     parser.add_argument('--compare', action='store_true', help='Compare recent periods')
     parser.add_argument('--skill-trends', action='store_true', help='Show skill trends')
+    parser.add_argument('--forecast', action='store_true', help='Forecast skill demand (90-day)')
     parser.add_argument('--report', action='store_true', help='Generate full trend report')
     
     args = parser.parse_args()
@@ -271,6 +390,29 @@ def main():
     elif args.skill_trends:
         trends = tracker.get_skill_trends()
         print(json.dumps(trends, indent=2))
+    elif args.forecast:
+        forecasts = tracker.forecast_skills()
+        if forecasts:
+            print("\n" + "=" * 60)
+            print("SKILL DEMAND FORECAST (90-day)")
+            print("=" * 60)
+            for f in forecasts[:15]:
+                direction = "↑" if f['growth_rate'] > 0 else "↓" if f['growth_rate'] < 0 else "→"
+                print(f"  {direction} {f['skill'].upper():25s} "
+                      f"now: {f['current_count']:4d}  →  predicted: {f['predicted_count']:6.0f}  "
+                      f"(R²={f['confidence']:.2f})")
+            print("=" * 60)
+
+            rankings = tracker.get_growth_rankings()
+            if rankings['rising']:
+                print(f"\n  RISING:    {', '.join(s.upper() for s in rankings['rising'][:5])}")
+            if rankings['stable']:
+                print(f"  STABLE:    {', '.join(s.upper() for s in rankings['stable'][:5])}")
+            if rankings['declining']:
+                print(f"  DECLINING: {', '.join(s.upper() for s in rankings['declining'][:5])}")
+        else:
+            print("[!] Not enough historical data for forecasting.")
+            print("    Run the pipeline a few times to build up trend history.")
     elif args.report:
         tracker.generate_trend_report()
     else:
@@ -278,8 +420,10 @@ def main():
         print("\nExamples:")
         print("  python trend_tracker.py --snapshot     # Save current state")
         print("  python trend_tracker.py --compare      # Compare periods")
+        print("  python trend_tracker.py --forecast     # 90-day skill forecast")
         print("  python trend_tracker.py --report       # Full report")
 
 
 if __name__ == "__main__":
     main()
+

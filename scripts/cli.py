@@ -31,6 +31,11 @@ PROJECT_ROOT = Path(__file__).parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / 'scripts'
 
 
+def script_exists(script_name: str) -> bool:
+    """Check if a script exists in the scripts directory."""
+    return (SCRIPTS_DIR / script_name).exists()
+
+
 def run_script(script_name: str, args: list = None):
     """Run a script with arguments."""
     script_path = SCRIPTS_DIR / script_name
@@ -123,12 +128,18 @@ Examples:
         'visualize': ('visualize_data.py', []),
         'dashboard': ('dashboard.py', []),
         'api': ('api_server.py', []),
-        'cleanup': ('cleanup_project.py', ['--dry-run'] if args.dry_run else []),
-        'pipeline': ('run_pipeline.py', ['--skip-scrape'] if args.skip_scrape else []),
+        'cleanup': ('cleaner.py', []),
+        'pipeline': ('master_flow.py', ['--quick'] if args.skip_scrape else []),
         'trends': ('trend_tracker.py', ['--report']),
         'insights': ('market_insights.py', ['--generate']),
         'scheduler': ('scheduler.py', ['--start']),
         'db': ('database.py', ['--stats']),
+    }
+
+    # Keep only commands mapped to scripts that actually exist
+    commands = {
+        name: spec for name, spec in commands.items()
+        if script_exists(spec[0])
     }
     
     if command in commands:
