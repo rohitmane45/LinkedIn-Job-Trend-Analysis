@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="JobAnalytics - LinkedIn Job Trend Analysis Dashboard for Indian Job Market Intelligence">
+<title>JobAnalytics — LinkedIn Job Trend Analysis</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="position:fixed;inset:0;z-index:999;background:var(--bg-base);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div class="logo-icon" style="width:64px;height:64px;font-size:28px;border-radius:16px">J</div>
+  <div style="font-size:18px;font-weight:700;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Loading dashboard data…</div>
+  <div style="font-size:12px;color:var(--text-muted)">Connecting to pipeline</div>
+</div>
+
+<!-- Hamburger -->
+<div class="hamburger" onclick="toggleSidebar()">
+  <span></span><span></span><span></span>
+</div>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">J</div>
+    <span>JobAnalytics</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-page="overview" onclick="switchPage('overview', this)">
+      <span class="nav-icon">📊</span> Overview
+    </div>
+    <div class="nav-item" data-page="skills" onclick="switchPage('skills', this)">
+      <span class="nav-icon">🔥</span> Skill Trends
+    </div>
+    <div class="nav-item" data-page="companies" onclick="switchPage('companies', this)">
+      <span class="nav-icon">🏢</span> Companies
+    </div>
+    <div class="nav-item" data-page="salary" onclick="switchPage('salary', this)">
+      <span class="nav-icon">💰</span> Salary Predictor
+    </div>
+    <div class="nav-item" data-page="resume" onclick="switchPage('resume', this)">
+      <span class="nav-icon">📄</span> Resume Match
+    </div>
+    <div class="nav-item" data-page="forecast" onclick="switchPage('forecast', this)">
+      <span class="nav-icon">📈</span> Forecast
+    </div>
+  </nav>
+  <button class="refresh-btn" onclick="location.reload()">↻ Refresh Data</button>
+  <div class="sidebar-user">
+    <div class="avatar">RM</div>
+    <div class="user-info">
+      <div class="name" id="sidebarName">Rohit Mane</div>
+      <div class="role" id="sidebarRole">AI &amp; Data Science</div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main">
+
+<!-- ════════ PAGE 1: OVERVIEW ════════ -->
+<div class="page active" id="page-overview">
+  <h1 class="page-title">Dashboard Overview</h1>
+  <p class="page-subtitle">Real-time LinkedIn job market intelligence for India · <span id="lastUpdated">Loading...</span></p>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon">💼</div>
+      <div><div class="stat-number" id="statJobs">–</div><div class="stat-label">Total Jobs</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏢</div>
+      <div><div class="stat-number" id="statCompanies">–</div><div class="stat-label">Companies Hiring</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🌆</div>
+      <div><div class="stat-number" id="statCities">–</div><div class="stat-label">Cities Covered</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div><div class="stat-number" id="statSkills">–</div><div class="stat-label">Skills Tracked</div></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-60">
+      <div class="card">
+        <div class="card-title">Top 10 Skills in Demand</div>
+        <div class="chart-container"><canvas id="chartSkills"></canvas></div>
+      </div>
+    </div>
+    <div class="col-40">
+      <div class="card">
+        <div class="card-title">Experience Distribution</div>
+        <div class="chart-container" style="max-width:280px;margin:0 auto"><canvas id="chartExp"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-50">
+      <div class="card">
+        <div class="card-title">Top Job Titles</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rank</th><th>Title</th><th>Positions</th></tr></thead>
+            <tbody id="jobTitlesTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-50">
+      <div class="card">
+        <div class="card-title">Jobs by City</div>
+        <div class="chart-container"><canvas id="chartCities"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PAGE 2: SKILL TRENDS ════════ -->
+<div class="page" id="page-skills">
+  <h1 class="page-title">Skill Trends</h1>
+  <p class="page-subtitle">Track rising, stable, and declining skills in the Indian tech job market</p>
+
+  <div class="section-header">🔥 Trending Now</div>
+  <div class="grid-3" id="trendCards"></div>
+
+  <div class="section-header">🔗 Skill Co-occurrence Clusters</div>
+  <div class="grid-3" id="clusterGrid"></div>
+
+  <div class="section-header">📈 90-Day Demand Forecast</div>
+  <div class="card">
+    <div class="chart-container"><canvas id="chartForecast90"></canvas></div>
+  </div>
+</div>
+
+<!-- ════════ PAGE 3: COMPANIES ════════ -->
+<div class="page" id="page-companies">
+  <h1 class="page-title">Companies</h1>
+  <p class="page-subtitle">Explore hiring companies across the Indian tech landscape</p>
+
+  <div class="search-bar">
+    <span>🔍</span>
+    <input type="text" placeholder="Search companies..." id="companySearch" oninput="filterCompanies()">
+  </div>
+
+  <div class="filter-pills" id="companyFilters">
+    <div class="filter-pill active" onclick="filterByType('All', this)">All</div>
+    <div class="filter-pill" onclick="filterByType('Product', this)">Product</div>
+    <div class="filter-pill" onclick="filterByType('Service', this)">Service</div>
+    <div class="filter-pill" onclick="filterByType('Startup', this)">Startup</div>
+    <div class="filter-pill" onclick="filterByType('MNC', this)">MNC</div>
+  </div>
+
+  <div class="grid-3" id="companyGrid"></div>
+</div>
+
+<!-- ════════ PAGE 4: SALARY PREDICTOR ════════ -->
+<div class="page" id="page-salary">
+  <h1 class="page-title">Salary Predictor</h1>
+  <p class="page-subtitle">AI-powered salary prediction for Indian tech roles</p>
+
+  <div class="row">
+    <div class="col-50">
+      <div class="card">
+        <div class="card-title">Enter Details</div>
+        <div class="form-group">
+          <label class="form-label">Job Role</label>
+          <select class="input-field" id="salaryRole"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <select class="input-field" id="salaryCity"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Experience (Years)</label>
+          <div class="slider-wrap">
+            <input type="range" class="slider" id="salaryExp" min="0" max="10" value="2" oninput="document.getElementById('expVal').textContent=this.value+' years'">
+            <div class="slider-val" id="expVal">2 years</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Skills</label>
+          <div id="skillChips" style="margin-bottom:8px"></div>
+        </div>
+        <button class="btn-primary" style="width:100%" onclick="predictSalary()">Predict Salary</button>
+      </div>
+    </div>
+    <div class="col-50">
+      <div class="card" id="salaryResult" style="display:none">
+        <div class="salary-result">
+          <div class="card-title" style="text-align:center">Predicted Salary Range</div>
+          <div class="salary-range" id="salaryRangeText">–</div>
+          <div class="salary-median" id="salaryMedianText">–</div>
+          <div class="gauge-bar"><div class="gauge-marker" id="gaugeMarker" style="left:50%"></div></div>
+          <div class="gauge-labels"><span>Below Market</span><span>Market Rate</span><span>Above Market</span></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">Salary by Experience</div>
+        <div class="chart-container"><canvas id="chartSalaryExp"></canvas></div>
+      </div>
+      <div class="card" style="margin-top:20px">
+        <div class="card-title">Similar Roles Comparison</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Role</th><th>Avg Salary</th><th>Trend</th></tr></thead>
+            <tbody id="similarRolesTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PAGE 5: RESUME MATCH ════════ -->
+<div class="page" id="page-resume">
+  <h1 class="page-title">Resume Match</h1>
+  <p class="page-subtitle">Your profile matched against real LinkedIn job postings</p>
+
+  <div class="upload-zone" id="uploadZone" onclick="simulateUpload()">
+    <div class="upload-icon">📤</div>
+    <div style="font-size:16px;font-weight:600;margin-bottom:6px">Click to load your profile &amp; match jobs</div>
+    <div style="font-size:13px;color:var(--text-muted)">or <span style="color:var(--accent-2);cursor:pointer">Browse Files</span></div>
+  </div>
+
+  <div id="resumeResults" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div class="avatar" style="width:48px;height:48px;font-size:18px">RM</div>
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700" id="profileName">User</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px" id="profileTitle">–</div>
+          <div style="margin-top:8px" id="profileSkills"></div>
+        </div>
+        <span class="chip chip-success" style="font-size:12px;padding:6px 14px">✓ Match Ready</span>
+      </div>
+    </div>
+
+    <div class="section-header">🎯 Top Job Matches</div>
+    <div id="matchCards"></div>
+
+    <div class="section-header" style="margin-top:24px">📊 Skill Gap Analysis</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title" style="color:var(--success)">✅ You Have</div>
+        <div id="haveSkills"></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:var(--danger)">❌ You're Missing</div>
+        <div id="gapSkills"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PAGE 6: FORECAST ════════ -->
+<div class="page" id="page-forecast">
+  <h1 class="page-title">Skill Demand Forecast</h1>
+  <p class="page-subtitle">90-day predictive analytics for skill demand in the Indian tech job market</p>
+
+  <div class="section-header">📈 Forecast Cards</div>
+  <div class="grid-2x3" id="forecastCards"></div>
+
+  <div class="section-header">📋 Master Forecast Table</div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Skill</th><th>Current</th><th>30d</th><th>60d</th><th>90d</th><th>Trend</th></tr></thead>
+        <tbody id="forecastTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="alert-box">
+    <div class="alert-title">🚀 New Emerging Skills This Month</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px" id="emergingSkills"></div>
+  </div>
+</div>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

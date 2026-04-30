@@ -406,20 +406,20 @@ class MasterFlowController:
         """Step 8: Launch the web dashboard."""
         self.print_step(8, 9, "LAUNCHING WEB DASHBOARD")
         
-        print("  Starting dashboard server...")
-        print("  Dashboard will open in your browser at http://localhost:5000")
+        print("  Starting dashboard server with real pipeline data...")
+        print("  Dashboard will open in your browser (http://localhost:8080/index.html)")
         print("\n  Press Ctrl+C to stop the dashboard\n")
         
         # Open browser after short delay
         import threading
         def open_browser():
-            time.sleep(2)
-            webbrowser.open('http://localhost:5000')
+            time.sleep(3)
+            webbrowser.open('http://localhost:8080/index.html')
         
         threading.Thread(target=open_browser, daemon=True).start()
         
-        # Run dashboard
-        self.run_script('dashboard.py')
+        # Run the dashboard API server (serves HTML + real data API)
+        self.run_script('dashboard_server.py', ['--port', '8080'])
         return True
     
     def print_summary(self):
@@ -509,6 +509,7 @@ def main():
     parser.add_argument('--local', action='store_true', help='Force local stored data')
     parser.add_argument('--quick', action='store_true', help='Quick mode (minimal user input)')
     parser.add_argument('--dashboard-only', action='store_true', help='Just launch dashboard')
+    parser.add_argument('--ui', choices=['streamlit', 'jinja'], help='Choose dashboard UI to launch')
     
     args = parser.parse_args()
     

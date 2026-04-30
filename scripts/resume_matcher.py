@@ -146,6 +146,9 @@ class ResumeMatcher:
         company = str(job.get('company', '')).lower()
         location = str(job.get('location', '')).lower()
         description = str(job.get('description', '')).lower()
+        job_skills_str = str(job.get('skills', '')).lower()
+        # Combine all text sources for skill matching
+        searchable_text = f"{title} {description} {job_skills_str}"
         
         # 1. Skills match (40% weight)
         max_score += 40
@@ -153,7 +156,7 @@ class ResumeMatcher:
             matched_skills = []
             for skill in self.profile.skills:
                 skill_lower = skill.lower()
-                if skill_lower in description or skill_lower in title:
+                if skill_lower in searchable_text:
                     matched_skills.append(skill)
             
             skill_match_pct = len(matched_skills) / len(self.profile.skills) if self.profile.skills else 0
@@ -166,8 +169,8 @@ class ResumeMatcher:
             }
         
         # 2. Title match (25% weight)
-        max_score += 25
         if self.profile.title:
+            max_score += 25
             title_words = self.profile.title.lower().split()
             matched_words = sum(1 for word in title_words if word in title)
             title_match_pct = matched_words / len(title_words) if title_words else 0
@@ -179,8 +182,8 @@ class ResumeMatcher:
             }
         
         # 3. Location match (15% weight)
-        max_score += 15
         if self.profile.preferred_locations:
+            max_score += 15
             location_match = any(loc.lower() in location for loc in self.profile.preferred_locations)
             if location_match:
                 score += 15
@@ -190,8 +193,8 @@ class ResumeMatcher:
             }
         
         # 4. Company preference (10% weight)
-        max_score += 10
         if self.profile.preferred_companies:
+            max_score += 10
             company_match = any(comp.lower() in company for comp in self.profile.preferred_companies)
             if company_match:
                 score += 10
@@ -201,9 +204,9 @@ class ResumeMatcher:
             }
         
         # 5. Job type match (10% weight)
-        max_score += 10
         if self.profile.job_types:
-            job_type_match = any(jt.lower() in description for jt in self.profile.job_types)
+            max_score += 10
+            job_type_match = any(jt.lower() in searchable_text for jt in self.profile.job_types)
             if job_type_match:
                 score += 10
             breakdown['job_type'] = {

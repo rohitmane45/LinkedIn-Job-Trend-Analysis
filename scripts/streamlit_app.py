@@ -696,54 +696,145 @@ def page_resume():
     st.markdown("""
     <div class="hero-banner">
         <h1>📄 Resume Match</h1>
-        <p>Upload your PDF resume and instantly find matching jobs</p>
+        <p>Tell us about yourself and find your perfect job match</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── PDF Upload Section ──
-    uploaded = st.file_uploader(
-        "📤 Upload your resume (PDF)", type=["pdf"],
-        help="We'll extract your skills and match you to jobs instantly",
-    )
+    # ── Experience level mapping ──
+    EXP_MAP = {
+        "Fresher (0 years)": 0,
+        "1–2 years": 1,
+        "3–5 years": 3,
+        "5–10 years": 5,
+        "10+ years": 10,
+    }
 
-    profile_data = None
+    # ══════════════════════════════════════════════════════════
+    # STEP 1 — Manual Profile Form
+    # ══════════════════════════════════════════════════════════
+    st.markdown("### ✏️ Step 1 — Your Professional Profile")
+    st.caption("Fill in your details below. This information will be used for job matching.")
 
-    if uploaded is not None:
-        # Parse the uploaded PDF
-        try:
-            import pdfplumber
-            from resume_parser import parse_resume_text
+    with st.form("profile_form"):
+        col_a, col_b = st.columns(2)
+        with col_a:
+            form_name = st.text_input(
+                "👤 Full Name",
+                value=st.session_state.get("profile_name", ""),
+                placeholder="e.g. Rohit Mane",
+            )
+            form_skills = st.text_input(
+                "🛠️ Top Skills (comma-separated)",
+                value=st.session_state.get("profile_skills_raw", ""),
+                placeholder="e.g. python, machine learning, sql, power bi",
+            )
+            form_experience = st.selectbox(
+                "📅 Experience Level",
+                list(EXP_MAP.keys()),
+                index=list(EXP_MAP.keys()).index(
+                    st.session_state.get("profile_experience_label", "Fresher (0 years)")
+                ),
+            )
+        with col_b:
+            form_expertise = st.text_input(
+                "🎯 Field of Expertise",
+                value=st.session_state.get("profile_expertise", ""),
+                placeholder="e.g. Data Science, Web Development, DevOps",
+            )
+            form_domain = st.text_input(
+                "🏢 Target Industry / Domain",
+                value=st.session_state.get("profile_domain", ""),
+                placeholder="e.g. IT, Finance, Healthcare, E-commerce",
+            )
 
-            with pdfplumber.open(io.BytesIO(uploaded.read())) as pdf:
-                text = "\n".join(
-                    page.extract_text() or "" for page in pdf.pages
-                )
+        submitted = st.form_submit_button(
+            "🚀 Save Profile & Find Jobs", use_container_width=True, type="primary",
+        )
 
-            if text.strip():
-                profile_data = parse_resume_text(text)
-                st.success(f"✅ Resume parsed! Extracted {len(text):,} characters from {uploaded.name}")
-            else:
-                st.error("Could not extract text from this PDF. Try a text-based PDF.")
-        except ImportError:
-            st.error("pdfplumber not installed. Run: `pip install pdfplumber`")
-        except Exception as e:
-            st.error(f"Error parsing PDF: {e}")
+    if submitted:
+        if not form_name.strip() or not form_skills.strip():
+            st.error("Please fill in at least your **Name** and **Top Skills**.")
+        else:
+            # Store in session state
+            st.session_state["profile_name"] = form_name.strip()
+            st.session_state["profile_skills_raw"] = form_skills.strip()
+            st.session_state["profile_skills"] = [
+                s.strip().lower() for s in form_skills.split(",") if s.strip()
+            ]
+            st.session_state["profile_expertise"] = form_expertise.strip()
+            st.session_state["profile_domain"] = form_domain.strip()
+            st.session_state["profile_experience_label"] = form_experience
+            st.session_state["profile_experience_years"] = EXP_MAP[form_experience]
+            st.session_state["profile_submitted"] = True
 
-    # ── Show parsed profile ──
-    if profile_data:
-        st.markdown("### 👤 Extracted Profile")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Detected Title", profile_data.get("title") or "Not detected")
-        c2.metric("Experience", f"{profile_data.get('experience_years', 0)} years")
-        c3.metric("Skills Found", f"{len(profile_data.get('skills', []))}")
+    # ══════════════════════════════════════════════════════════
+    # STEP 2 — Optional PDF Upload (enrichment only)
+    # ══════════════════════════════════════════════════════════
+    with st.expander("📎 Step 2 — Upload Resume PDF (optional)", expanded=False):
+        st.caption(
+            "Your resume will be used to show additional details like projects, "
+            "certifications, and education. It will **not** override your profile above."
+        )
+        uploaded = st.file_uploader(
+            "Upload resume (PDF)", type=["pdf"],
+            help="Optional — used for supplementary details only",
+            label_visibility="collapsed",
+        )
 
-        skills = profile_data.get("skills", [])
-        if skills:
-            st.markdown(render_skill_badges(skills), unsafe_allow_html=True)
+        if uploaded is not None:
+            try:
+                import pdfplumber
 
-        locations = profile_data.get("preferred_locations", [])
-        if locations:
-            st.markdown(f"📍 **Locations:** {', '.join(locations)}")
+                with pdfplumber.open(io.BytesIO(uploaded.read())) as pdf:
+                    resume_text = "\n".join(
+                        page.extract_text() or "" for page in pdf.pages
+                    )
+
+                if resume_text.strip():
+                    st.session_state["resume_text"] = resume_text
+                    st.success(
+                        f"✅ Resume uploaded! Extracted {len(resume_text):,} characters "
+                        f"from {uploaded.name}"
+                    )
+                else:
+                    st.error("Could not extract text from this PDF. Try a text-based PDF.")
+            except ImportError:
+                st.error("pdfplumber not installed. Run: `pip install pdfplumber`")
+            except Exception as e:
+                st.error(f"Error reading PDF: {e}")
+
+    # ══════════════════════════════════════════════════════════
+    # Display Profile + Job Matches
+    # ══════════════════════════════════════════════════════════
+    if st.session_state.get("profile_submitted"):
+        st.markdown("---")
+        st.markdown("### 👤 Your Profile")
+
+        p_name = st.session_state.get("profile_name", "")
+        p_skills = st.session_state.get("profile_skills", [])
+        p_expertise = st.session_state.get("profile_expertise", "")
+        p_domain = st.session_state.get("profile_domain", "")
+        p_exp_label = st.session_state.get("profile_experience_label", "Fresher (0 years)")
+        p_exp_years = st.session_state.get("profile_experience_years", 0)
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Name", p_name)
+        c2.metric("Expertise", p_expertise or "—")
+        c3.metric("Domain", p_domain or "—")
+        c4.metric("Experience", p_exp_label)
+
+        if p_skills:
+            st.markdown(render_skill_badges(p_skills), unsafe_allow_html=True)
+
+        # ── Show resume highlights if uploaded ──
+        resume_text = st.session_state.get("resume_text", "")
+        if resume_text:
+            with st.expander("📃 Resume Highlights", expanded=False):
+                # Show a trimmed preview of the resume text
+                preview = resume_text[:2000]
+                if len(resume_text) > 2000:
+                    preview += "\n\n... (trimmed)"
+                st.text(preview)
 
         # ── Live Job Matching ──
         st.markdown("---")
@@ -754,7 +845,19 @@ def page_resume():
             st.warning("No job data found. Run `python scripts/master_flow.py` first.")
             return
 
-        # Run matching
+        # Build profile dict for the matcher
+        profile_data = {
+            "name": p_name,
+            "title": p_expertise,
+            "experience_years": p_exp_years,
+            "skills": p_skills,
+            "preferred_locations": [],
+            "preferred_companies": [],
+            "min_salary_lpa": 0,
+            "job_types": [],
+            "industries": [p_domain] if p_domain else [],
+        }
+
         from resume_matcher import ResumeMatcher, UserProfile
         user = UserProfile.from_dict(profile_data)
         matcher = ResumeMatcher(user)
@@ -769,7 +872,7 @@ def page_resume():
         top_matches = scored[:15]
 
         if not top_matches:
-            st.info("No strong matches found. Try uploading a different resume.")
+            st.info("No strong matches found. Try adjusting your skills or expertise field.")
             return
 
         st.markdown(f"**Found {len(scored)} matches** (showing top {len(top_matches)})")
@@ -811,58 +914,17 @@ def page_resume():
             """, unsafe_allow_html=True)
 
     else:
-        # ── Fallback: show saved profile / matches ──
-        profile = get_profile()
-        matches = get_matches()
-
-        if profile and profile.get("skills"):
-            st.markdown("### 👤 Saved Profile")
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Name", profile.get("name") or "N/A")
-            c2.metric("Title", profile.get("title") or "N/A")
-            c3.metric("Experience", f"{profile.get('experience_years', 0)} years")
-
-            skills = profile.get("skills", [])
-            if skills:
-                st.markdown(render_skill_badges(skills), unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div class="glass-panel" style="text-align:center; padding:3rem;">
-                <div style="font-size:3rem; margin-bottom:1rem;">📤</div>
-                <div style="color:#e2e8f0; font-size:1.1rem; font-weight:600;">Upload Your Resume</div>
-                <div style="color:#64748b; font-size:0.9rem; margin-top:0.5rem;">
-                    Drop a PDF above to instantly discover matching jobs<br>
-                    Or create a profile manually: <code>python scripts/resume_matcher.py --profile</code>
-                </div>
+        # ── Prompt to fill profile ──
+        st.markdown("""
+        <div class="glass-panel" style="text-align:center; padding:3rem;">
+            <div style="font-size:3rem; margin-bottom:1rem;">✏️</div>
+            <div style="color:#e2e8f0; font-size:1.1rem; font-weight:600;">Fill Your Profile Above</div>
+            <div style="color:#64748b; font-size:0.9rem; margin-top:0.5rem;">
+                Enter your name, skills, expertise, and experience<br>
+                then click <strong>Save Profile & Find Jobs</strong> to see matching positions.
             </div>
-            """, unsafe_allow_html=True)
-
-        if matches:
-            st.markdown("---")
-            st.markdown(f"### 🎯 Saved Matches ({len(matches)})")
-            for i, match in enumerate(matches, 1):
-                score = match.get("score", 0)
-                color = "#34d399" if score >= 70 else "#fbbf24" if score >= 50 else "#f87171"
-                title = match.get("title", "N/A")
-                company = match.get("company", "N/A")
-                apply_html = make_apply_links(title, company)
-
-                st.markdown(f"""
-                <div class="match-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div class="match-title">{i}. {title}</div>
-                            <div class="match-company">{company}</div>
-                            <div class="match-meta">📍 {match.get('location', 'N/A')}</div>
-                            <div style="margin-top:6px;">{apply_html}</div>
-                        </div>
-                        <div style="min-width:70px;">
-                            <div class="match-score" style="color:{color};">{score:.0f}%</div>
-                            <div class="match-score-label">match</div>
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # ════════════════════════════════════════════════════════════════
