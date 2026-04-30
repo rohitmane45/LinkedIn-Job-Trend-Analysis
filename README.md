@@ -58,23 +58,23 @@
 ### Dashboard Overview
 <!-- Replace the path below with your actual screenshot -->
 <p align="center">
-  <img src="D:\Projects\Linkedin-Job-Analysis\assets\screenshots\image.png" alt="Dashboard Overview — Stats, Top Skills, Experience Distribution, Jobs by City" width="90%" />
+  <img src="assets/screenshots/image.png" alt="Dashboard Overview — Stats, Top Skills, Experience Distribution, Jobs by City" width="90%" />
 </p>
 
 
 ### AI Salary Predictor
 <p align="center">
-  <img src="D:\Projects\Linkedin-Job-Analysis\assets\screenshots\salarypre.png" alt="Salary Predictor — Role, City, Experience based ML Prediction" width="90%" />
+  <img src="assets/screenshots/salarypre.png" alt="Salary Predictor — Role, City, Experience based ML Prediction" width="90%" />
 </p>
 
 ### Resume Match & Skill Gap Analysis
 <p align="center">
-  <img src="D:\Projects\Linkedin-Job-Analysis\assets\screenshots\resumematch.png" alt="Resume Matcher — Job Matching Scores and Skill Gap Analysis" width="90%" />
+  <img src="assets/screenshots/resumematch.png" alt="Resume Matcher — Job Matching Scores and Skill Gap Analysis" width="90%" />
 </p>
 
 ### 90-Day Demand Forecast
 <p align="center">
-  <img src="D:\Projects\Linkedin-Job-Analysis\assets\screenshots\skillforecast.png" alt="Forecast — 90-Day Skill Demand Predictions with Confidence Levels" width="90%" />
+  <img src="assets/screenshots/skillforecast.png" alt="Forecast — 90-Day Skill Demand Predictions with Confidence Levels" width="90%" />
 </p>
 
 ---
