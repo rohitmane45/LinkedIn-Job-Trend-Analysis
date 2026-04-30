@@ -6,13 +6,7 @@
   <img src="https://img.shields.io/badge/Dashboard-Live-6c63ff?style=for-the-badge" alt="Dashboard"/>
 </p>
 
-<h1 align="center">
-  <br/>
-  <img src="assets/logo.png" alt="JobAnalytics Logo" width="80" />
-  <br/>
-  JobAnalytics — LinkedIn Job Trend Analysis
-  <br/>
-</h1>
+
 
 <p align="center">
   <strong>An end-to-end data intelligence platform that scrapes, analyzes, and visualizes LinkedIn job market trends across India — featuring AI-powered salary prediction, resume matching, skill forecasting, and an interactive dashboard.</strong>
@@ -60,37 +54,27 @@
 
 ## 📸 Screenshots
 
-> Add your screenshots to the `assets/screenshots/` directory and update the paths below.
 
 ### Dashboard Overview
 <!-- Replace the path below with your actual screenshot -->
 <p align="center">
-  <img src="assets/screenshots/image.png" alt="Dashboard Overview — Stats, Top Skills, Experience Distribution, Jobs by City" width="90%" />
+  <img src="D:\Projects\Linkedin-Job-Analysis\assets\screenshots\image.png" alt="Dashboard Overview — Stats, Top Skills, Experience Distribution, Jobs by City" width="90%" />
 </p>
 
-### Skill Trends & Forecasting
-<p align="center">
-  <img src="assets/screenshots/image2.png" alt="Skill Trends — Rising, Stable, and Declining Skills with Sparklines" width="90%" />
-</p>
-
-### Company Explorer
-<p align="center">
-  <img src="assets/screenshots/company-explorer.png" alt="Company Explorer — Filterable Company Cards with Hiring Data" width="90%" />
-</p>
 
 ### AI Salary Predictor
 <p align="center">
-  <img src="assets/screenshots/salarypre.png" alt="Salary Predictor — Role, City, Experience based ML Prediction" width="90%" />
+  <img src="D:\Projects\Linkedin-Job-Analysis\assets\screenshots\salarypre.png" alt="Salary Predictor — Role, City, Experience based ML Prediction" width="90%" />
 </p>
 
 ### Resume Match & Skill Gap Analysis
 <p align="center">
-  <img src="assets/screenshots/resumematch.png" alt="Resume Matcher — Job Matching Scores and Skill Gap Analysis" width="90%" />
+  <img src="D:\Projects\Linkedin-Job-Analysis\assets\screenshots\resumematch.png" alt="Resume Matcher — Job Matching Scores and Skill Gap Analysis" width="90%" />
 </p>
 
 ### 90-Day Demand Forecast
 <p align="center">
-  <img src="assets/screenshots/skillforecast.png" alt="Forecast — 90-Day Skill Demand Predictions with Confidence Levels" width="90%" />
+  <img src="D:\Projects\Linkedin-Job-Analysis\assets\screenshots\skillforecast.png" alt="Forecast — 90-Day Skill Demand Predictions with Confidence Levels" width="90%" />
 </p>
 
 ---
