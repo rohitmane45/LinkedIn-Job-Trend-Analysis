@@ -1,3 +1,5 @@
+<h1 align="center">📊 LinkedIn Job Market Analytics</h1>
+
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
   <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge" alt="License"/>
