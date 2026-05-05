@@ -458,3 +458,90 @@ tr:hover td { background: rgba(108,99,255,0.05); }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
+
+/* ── RESUME PAGE: STEP HEADERS ── */
+.page h3 {
+  font-size: 18px; font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0; margin-bottom: 4px;
+}
+.page h3 .step-emoji {
+  font-size: 20px;
+}
+
+/* ── RESUME PAGE: DETAILS / COLLAPSIBLE ── */
+details.card {
+  transition: all 0.3s ease;
+}
+details.card summary {
+  cursor: pointer;
+  padding: 2px 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+details.card summary::-webkit-details-marker { display: none; }
+details.card summary::marker { display: none; }
+details.card[open] summary span:last-child {
+  transform: rotate(180deg);
+  display: inline-block;
+}
+
+/* ── RESUME PAGE: UPLOAD ZONE (INSIDE DETAILS) ── */
+.upload-zone {
+  border: 2px dashed rgba(99, 102, 241, 0.3);
+  border-radius: var(--radius-md);
+  padding: 32px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(15, 23, 42, 0.4);
+}
+.upload-zone:hover {
+  border-color: rgba(108, 99, 255, 0.6);
+  background: rgba(108, 99, 255, 0.05);
+}
+.upload-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+/* ── RESUME PAGE: FULL-WIDTH SAVE BUTTON ── */
+#saveProfileBtn {
+  width: 100%;
+  justify-content: center;
+  font-size: 15px;
+  padding: 13px 20px;
+  letter-spacing: 0.01em;
+  border-radius: var(--radius-md);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+#saveProfileBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(108, 99, 255, 0.35);
+}
+
+/* ── RESUME PAGE: FORM LABEL WITH EMOJI ── */
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* ── RESUME PAGE: SELECT ── */
+select.input-field {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236c63ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+select.input-field option {
+  background: #1a1f35;
+  color: var(--text-primary);
+}

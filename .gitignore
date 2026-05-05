@@ -65,3 +65,4 @@ config/alerts/
 dist/
 build/
 *.egg-info/
+data/temp_resume.pdf

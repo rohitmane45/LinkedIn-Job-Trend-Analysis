@@ -59,7 +59,7 @@ function renderOverview(ov) {
   if (ov.last_updated) {
     const d = new Date(ov.last_updated);
     document.getElementById('lastUpdated').textContent =
-      `Last updated ${d.toLocaleDateString('en-IN')} at ${d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})}`;
+      `Last updated ${d.toLocaleDateString('en-IN')} at ${d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
   }
 
   // Top 10 Skills Bar Chart
@@ -359,18 +359,79 @@ function predictSalary() {
 // ══════════════════════════
 //  PAGE 5: RESUME MATCH
 // ══════════════════════════
+// Helper: generate 1-2 letter initials from name or title
+function getInitials(name, title) {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/);
+    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  }
+  if (title && title.trim()) {
+    const words = title.trim().split(/\s+/);
+    return (words[0][0] + (words[1] ? words[1][0] : '')).toUpperCase();
+  }
+  return '?';
+}
+
+function updateAvatars(name, title) {
+  const initials = getInitials(name, title);
+  // Profile card avatar
+  document.querySelectorAll('.avatar').forEach(el => { el.textContent = initials; });
+  // Sidebar avatar (if separate element exists)
+  const sidebarAvatar = document.querySelector('.sidebar-user .avatar');
+  if (sidebarAvatar) sidebarAvatar.textContent = initials;
+}
+
 function initResumePage(resumeData) {
   const profile = resumeData.user_profile || {};
+  const displayName = profile.name || (profile.title ? profile.title.split(' ')[0] + ' (from resume)' : 'User');
 
-  // Pre-fill user info
+  // ── Update sidebar ──────────────────────────────────────────
+  const sidebarName = document.getElementById('sidebarName');
+  const sidebarRole = document.getElementById('sidebarRole');
+  if (sidebarName) sidebarName.textContent = profile.name || profile.title || 'User';
+  if (sidebarRole) sidebarRole.textContent = profile.title || 'Job Seeker';
+
+  // ── Update all avatars ───────────────────────────────────────
+  updateAvatars(profile.name, profile.title);
+
+  // ── Profile card ─────────────────────────────────────────────
   const nameEl = document.getElementById('profileName');
   const titleEl = document.getElementById('profileTitle');
   const skillsEl = document.getElementById('profileSkills');
-
-  if (nameEl) nameEl.textContent = profile.name || 'User';
+  if (nameEl) nameEl.textContent = displayName;
   if (titleEl) titleEl.textContent = `${profile.title || 'Job Seeker'} · ${profile.experience_years || 0} yrs exp`;
-  if (skillsEl) {
-    skillsEl.innerHTML = (profile.skills || []).map(s => `<span class="chip chip-neutral">${s}</span>`).join('');
+  if (skillsEl && profile.skills) {
+    skillsEl.innerHTML = profile.skills.map(s => `<span class="chip chip-neutral">${s}</span>`).join('');
+  }
+
+  // ── Populate manual form inputs ───────────────────────────────
+  const nameInput = document.getElementById('manualName');
+  const titleInput = document.getElementById('manualTitle');
+  const domainInput = document.getElementById('manualDomain');
+  const skillsInput = document.getElementById('manualSkills');
+  const expSelect = document.getElementById('manualExp');
+
+  if (nameInput)   nameInput.value  = profile.name || '';
+  if (titleInput)  titleInput.value = profile.title || '';
+
+  // Domain from industries
+  if (domainInput) {
+    const domain = (profile.industries && profile.industries.length > 0) ? profile.industries[0] : '';
+    domainInput.value = domain;
+  }
+
+  // Map experience_years to closest dropdown option
+  if (expSelect) {
+    const expOpts = [0, 1, 3, 5, 10];
+    const numExp = parseInt(profile.experience_years) || 0;
+    const closest = expOpts.reduce((prev, curr) =>
+      Math.abs(curr - numExp) < Math.abs(prev - numExp) ? curr : prev
+    );
+    expSelect.value = String(closest);
+  }
+
+  if (skillsInput && profile.skills && profile.skills.length > 0) {
+    skillsInput.value = profile.skills.join(', ');
   }
 
   // Pre-build match cards from real data
@@ -381,11 +442,19 @@ function initResumePage(resumeData) {
     const pct = Math.round(m.score || 0);
     const colorCls = pct > 80 ? 'match-green' : pct > 60 ? 'match-orange' : 'match-red';
     const matchedSkills = (m.matched_skills || []).map(s => `<span class="chip chip-success">${s}</span>`).join('');
+    const linkedinUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(m.title + ' ' + m.company)}`;
+    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(m.title + ' ' + m.company + ' apply job')}`;
+    const directUrl = m.url && !m.url.includes('google.com/search') ? m.url : googleUrl;
+
+    const applyBtn = `
+      <a href="${linkedinUrl}" target="_blank" class="btn-sm" style="text-decoration:none; margin-left:12px; background:#0a66c2; color:#fff; border-radius:4px; padding:2px 8px; font-size:11px;">🔗 LinkedIn</a>
+      <a href="${directUrl}" target="_blank" class="btn-sm" style="text-decoration:none; margin-left:4px; background:var(--accent); color:#fff; border-radius:4px; padding:2px 8px; font-size:11px;">🔍 Web</a>
+    `;
     container.innerHTML += `
       <div class="match-card">
         <div class="match-rank">#${m.rank}</div>
         <div class="match-info">
-          <div class="company">${m.company} · ${m.title}</div>
+          <div class="company">${m.company} · ${m.title} ${applyBtn}</div>
           <div class="role">${m.location || ''}</div>
           <div style="margin-top:8px">${matchedSkills}</div>
         </div>
@@ -406,15 +475,125 @@ function initResumePage(resumeData) {
   }
 }
 
-function simulateUpload() {
+function handleFileUpload(inputOrFile) {
+  let file;
+  if (inputOrFile instanceof File) {
+    file = inputOrFile;
+  } else if (inputOrFile.files && inputOrFile.files[0]) {
+    file = inputOrFile.files[0];
+  } else {
+    return;
+  }
+
   const zone = document.getElementById('uploadZone');
-  const profile = DATA.resume.user_profile || {};
-  zone.innerHTML = `<div style="color:var(--success);font-size:14px;font-weight:600">✓ Resume loaded — ${profile.name || 'User'}'s profile</div>`;
-  zone.style.borderColor = 'rgba(72,187,120,0.5)';
-  setTimeout(() => {
-    document.getElementById('resumeResults').style.display = 'block';
-  }, 400);
+  zone.innerHTML = `<div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px">⏳ Uploading &amp; parsing <strong>${file.name}</strong>…</div>`;
+  zone.style.borderColor = 'rgba(108,99,255,0.5)';
+
+  fetch('/api/upload_resume', {
+    method: 'POST',
+    body: file,
+    headers: { 'Content-Length': file.size }
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success) {
+        const parsed = res.profile || {};
+        zone.innerHTML = `
+          <div style="color:var(--success);font-size:14px;font-weight:600;margin-bottom:8px">✅ Resume parsed from <strong>${file.name}</strong></div>
+          <div style="font-size:12px;color:var(--text-muted);display:flex;gap:16px;flex-wrap:wrap">
+            <span>🎯 Title: <strong style="color:var(--text-primary)">${parsed.title || 'Not detected'}</strong></span>
+            <span>⚡ Skills found: <strong style="color:var(--text-primary)">${parsed.skills_found || 0}</strong></span>
+            <span>📅 Experience: <strong style="color:var(--text-primary)">${parsed.experience_years || 0} yrs</strong></span>
+          </div>`;
+        zone.style.borderColor = 'rgba(72,187,120,0.5)';
+        zone.style.background = 'rgba(72,187,120,0.05)';
+
+        fetch('/api/data')
+          .then(r => r.json())
+          .then(data => {
+            DATA = data;
+            initResumePage(data.resume);
+            document.getElementById('resumeResults').style.display = 'block';
+            document.getElementById('resumeResults').scrollIntoView({ behavior: 'smooth' });
+          });
+      } else {
+        zone.innerHTML = `<div style="color:var(--danger);font-size:14px">❌ Error: ${res.error || 'Could not process resume'}</div>`;
+        zone.style.borderColor = 'rgba(252,129,129,0.5)';
+      }
+    })
+    .catch(err => {
+      zone.innerHTML = `<div style="color:var(--danger);font-size:14px">❌ Network error: ${err.message}</div>`;
+      zone.style.borderColor = 'rgba(252,129,129,0.5)';
+    });
 }
+
+function saveManualProfile() {
+  const btn = document.getElementById('saveProfileBtn');
+  btn.textContent = "Matching...";
+  btn.style.opacity = "0.7";
+
+  const payload = {
+    name: document.getElementById('manualName').value,
+    title: document.getElementById('manualTitle').value,
+    experience_years: document.getElementById('manualExp').value,
+    skills: document.getElementById('manualSkills').value
+  };
+
+  fetch('/api/save_profile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success) {
+        fetch('/api/data')
+          .then(r => r.json())
+          .then(data => {
+            DATA = data;
+            initResumePage(data.resume);
+            document.getElementById('resumeResults').style.display = 'block';
+            btn.textContent = "Save Profile & Find Matches";
+            btn.style.opacity = "1";
+          });
+      } else {
+        alert("Error saving profile: " + res.error);
+        btn.textContent = "Save Profile & Find Matches";
+        btn.style.opacity = "1";
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Error: " + err.message);
+      btn.textContent = "Save Profile & Find Matches";
+      btn.style.opacity = "1";
+    });
+}
+
+// Set up drag and drop
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.getElementById('uploadZone');
+  if (zone) {
+    zone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      zone.style.borderColor = 'var(--accent)';
+      zone.style.backgroundColor = 'rgba(108,99,255,0.05)';
+    });
+    zone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      zone.style.borderColor = '';
+      zone.style.backgroundColor = '';
+    });
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.style.borderColor = '';
+      zone.style.backgroundColor = '';
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFileUpload(e.dataTransfer.files[0]);
+      }
+    });
+  }
+});
 
 // ══════════════════════════
 //  PAGE 6: FORECAST
@@ -488,12 +667,13 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(data => {
       DATA = data;
 
-      // Update user info in sidebar
+      // Update sidebar with real profile data (no hardcoded names)
       const profile = data.resume.user_profile || {};
       const sidebarName = document.getElementById('sidebarName');
       const sidebarRole = document.getElementById('sidebarRole');
-      if (sidebarName) sidebarName.textContent = profile.name || 'Rohit Mane';
-      if (sidebarRole) sidebarRole.textContent = profile.title || 'Data Science';
+      if (sidebarName) sidebarName.textContent = profile.name || profile.title || 'User';
+      if (sidebarRole) sidebarRole.textContent = profile.title || 'Job Seeker';
+      updateAvatars(profile.name, profile.title);
 
       // Render all pages
       renderOverview(data.overview);

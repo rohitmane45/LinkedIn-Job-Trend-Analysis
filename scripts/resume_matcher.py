@@ -358,8 +358,6 @@ class ResumeMatcher:
     
     def save_matches_report(self):
         """Save matches to report file."""
-        if not self.matches:
-            return
         
         report_file = REPORTS_DIR / f"job_matches_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         
@@ -374,7 +372,7 @@ class ResumeMatcher:
                     'title': m['job'].get('title'),
                     'company': m['job'].get('company'),
                     'location': m['job'].get('location'),
-                    'url': m['job'].get('url'),
+                    'url': m['job'].get('url') or f"https://www.google.com/search?q={m['job'].get('company', '').replace(' ', '+')}+{m['job'].get('title', '').replace(' ', '+')}+job",
                     'matched_skills': m['breakdown'].get('skills', {}).get('matched', [])
                 }
                 for i, m in enumerate(self.matches)
